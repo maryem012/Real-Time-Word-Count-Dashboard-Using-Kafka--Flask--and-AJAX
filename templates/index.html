@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Count Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>  <!-- Include jQuery -->
+</head>
+<body>
+    <div class="container">
+        <h1 class="my-4 text-center">Word Count Dashboard</h1>
+
+        <!-- Display Total Characters Processed -->
+        <div class="row">
+            <div class="col-12 text-center">
+                <h3>Total Characters Processed: <span class="highlight" id="total-chars">{{ total_chars }}</span></h3>
+            </div>
+        </div>
+
+        <!-- Display Top 5 Most Frequent Words -->
+        <div class="row">
+            <div class="col-12">
+                <h4>Top 5 Most Frequent Words:</h4>
+                <table class="table table-striped" id="top-words-table">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Word</th>
+                            <th>Frequency</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for rank, (word, count) in top_words %}
+                            <tr>
+                                <td>{{ rank + 1 }}</td>
+                                <td>{{ word }}</td>
+                                <td>{{ count }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Display All Words Frequency (Limited to 20 words) -->
+        <div class="row">
+            <div class="col-12">
+                <h4>All Words Frequency (Limited to 20 words):</h4>
+                <table class="table table-bordered" id="all-words-table">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Word</th>
+                            <th>Frequency</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for rank, (word, count) in all_words %}
+                            <tr>
+                                <td>{{ rank + 1 }}</td>
+                                <td>{{ word }}</td>
+                                <td>{{ count }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- AJAX Script to Refresh Data Periodically -->
+    <script>
+        function fetchUpdatedStats() {
+            $.ajax({
+                url: '/stats',  // Endpoint to fetch updated data
+                method: 'GET',
+                success: function(response) {
+                    // Update the total character count
+                    $('#total-chars').text(response.total_chars);
+
+                    // Update the top words table
+                    var topWordsTable = $('#top-words-table tbody');
+                    topWordsTable.empty();  // Clear existing rows
+                    response.top_words.forEach(function(word, index) {
+                        topWordsTable.append(`
+                            <tr>
+                                <td>${index + 1}</td>
+                                <td>${word[0]}</td>
+                                <td>${word[1]}</td>
+                            </tr>
+                        `);
+                    });
+
+                    // Update the all words table (limited to 20 words)
+                    var allWordsTable = $('#all-words-table tbody');
+                    allWordsTable.empty();  // Clear existing rows
+                    response.top_words.forEach(function(word, index) {
+                        if (index < 20) {
+                            allWordsTable.append(`
+                                <tr>
+                                    <td>${index + 1}</td>
+                                    <td>${word[0]}</td>
+                                    <td>${word[1]}</td>
+                                </tr>
+                            `);
+                        }
+                    });
+                },
+                error: function(error) {
+                    console.error("Error fetching updated stats:", error);
+                }
+            });
+        }
+
+        // Call the fetchUpdatedStats function every 5 seconds
+        setInterval(fetchUpdatedStats, 5000);
+    </script>
+</body>
+</html>
